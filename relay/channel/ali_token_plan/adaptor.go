@@ -2,6 +2,7 @@ package ali_token_plan
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/QuantumNous/new-api/relay/channel"
@@ -46,6 +47,12 @@ func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Header, info *rel
 	channel.SetupApiRequestHeader(info, c, req)
 	req.Set("Authorization", "Bearer "+info.ApiKey)
 	return nil
+}
+
+// DoRequest 覆写父类方法，确保 DoApiRequest 接收的是 *ali_token_plan.Adaptor
+// 而非内层的 *ali.Adaptor，这样 GetRequestURL 和 SetupRequestHeader 的覆写才能生效
+func (a *Adaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, requestBody io.Reader) (any, error) {
+	return channel.DoApiRequest(a, c, info, requestBody)
 }
 
 func (a *Adaptor) GetModelList() []string {
