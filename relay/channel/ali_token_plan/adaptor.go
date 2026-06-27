@@ -2,11 +2,15 @@ package ali_token_plan
 
 import (
 	"fmt"
+	"net/http"
 
+	"github.com/QuantumNous/new-api/relay/channel"
 	"github.com/QuantumNous/new-api/relay/channel/ali"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/types"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Adaptor struct {
@@ -34,6 +38,14 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 	default:
 		return a.Adaptor.GetRequestURL(info)
 	}
+}
+
+// SetupRequestHeader 覆写父类方法，去掉 DashScope 专属头部（X-DashScope-SSE 等）
+// Token Plan 的 compatible-mode API 使用标准 OpenAI 协议，不需要 DashScope 头
+func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Header, info *relaycommon.RelayInfo) error {
+	channel.SetupApiRequestHeader(info, c, req)
+	req.Set("Authorization", "Bearer "+info.ApiKey)
+	return nil
 }
 
 func (a *Adaptor) GetModelList() []string {
