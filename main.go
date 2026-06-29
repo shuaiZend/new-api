@@ -161,6 +161,27 @@ func main() {
 
 	// Initialize HTTP server
 	server := gin.New()
+
+	// 配置可信代理，支持通过 TRUSTED_PROXIES 环境变量设置
+	// 格式：逗号分隔的 IP 或 CIDR，如 "127.0.0.1,172.16.0.0/12,10.0.0.0/8"
+	trustedProxies := os.Getenv("TRUSTED_PROXIES")
+	if trustedProxies != "" {
+		proxies := strings.Split(trustedProxies, ",")
+		for i := range proxies {
+			proxies[i] = strings.TrimSpace(proxies[i])
+		}
+		server.SetTrustedProxies(proxies)
+	} else {
+		// 默认信任常见内网代理地址
+		server.SetTrustedProxies([]string{
+			"127.0.0.1",
+			"::1",
+			"10.0.0.0/8",
+			"172.16.0.0/12",
+			"192.168.0.0/16",
+		})
+	}
+
 	server.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 		common.SysLog(fmt.Sprintf("panic detected: %v", err))
 		c.JSON(http.StatusInternalServerError, gin.H{

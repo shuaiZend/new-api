@@ -1,6 +1,9 @@
 package common
 
-import "net"
+import (
+	"net"
+	"strings"
+)
 
 func IsIP(s string) bool {
 	ip := net.ParseIP(s)
@@ -28,6 +31,28 @@ func IsPrivateIP(ip net.IP) bool {
 		}
 	}
 	return false
+}
+
+// NormalizeIP 规范化 IP 地址
+// - 去掉 IPv6 zone identifier (如 %eth0)
+// - 将 IPv4-mapped IPv6 (::ffff:x.x.x.x) 转换为纯 IPv4
+func NormalizeIP(ipStr string) string {
+	if ipStr == "" {
+		return ""
+	}
+	// 去掉 zone identifier
+	if idx := strings.Index(ipStr, "%"); idx != -1 {
+		ipStr = ipStr[:idx]
+	}
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return ipStr // 解析失败则原样返回
+	}
+	// IPv4-mapped IPv6 转换为 IPv4
+	if ipv4 := ip.To4(); ipv4 != nil {
+		return ipv4.String()
+	}
+	return ip.String()
 }
 
 func IsIpInCIDRList(ip net.IP, cidrList []string) bool {

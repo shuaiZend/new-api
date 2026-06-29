@@ -256,6 +256,37 @@ docker run --name new-api -d --restart always \
 
 ---
 
+## 🏢 企业增强特性
+
+本项目为企业内部部署场景深度优化，在完整功能基础上增强了安全性、可观测性与国内部署体验：
+
+### 与官方版本的主要差异
+
+| 特性 | 官方版本 | 本项目 |
+|------|---------|--------|
+| API 日志 IP 记录 | 依赖用户手动开启 `RecordIpLog` 设置 | **强制记录**，所有消费/错误日志自动记录客户端 IP |
+| IPv6 支持 | IP 字段未显式约束 | IP 字段 `varchar(45)` + `NormalizeIP` 规范化存储 |
+| 反向代理支持 | 未配置 TrustedProxies（存在 IP 伪造风险） | 通过 `TRUSTED_PROXIES` 环境变量配置可信代理 |
+| 阿里云百炼 Token Plan | 不支持 | 完整支持（渠道类型 59），兼容 `/v1/responses` 端点 |
+| 国内构建优化 | 无 | 提供 `Dockerfile.cn`（npm/Go 镜像加速） |
+
+### 环境变量配置
+
+| 变量名 | 说明 | 默认值 | 示例 |
+|--------|------|--------|------|
+| `TRUSTED_PROXIES` | 可信代理 IP/CIDR 列表（逗号分隔） | `127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16` | `10.0.0.1,172.20.0.0/16` |
+
+### Nginx 配置要求
+
+确保 Nginx 正确传递客户端 IP：
+
+```nginx
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Real-IP $remote_addr;
+```
+
+---
+
 ## 🤖 模型支持
 
 > 详情请参考 [接口文档 - 网关接口](https://docs.newapi.pro/zh/docs/api)
